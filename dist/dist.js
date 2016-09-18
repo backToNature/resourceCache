@@ -149,12 +149,14 @@
 
 
     var getUrlList = function (bindProp) {
-        var urlList = [], temp = '[' + bindProp + '*="';
-        document.querySelectorAll(temp + '.js"],' + temp + '.css"]').forEach(function (item) {
+        var urlList = [], temp = '[' + bindProp + '*="', i, item
+            sets = document.querySelectorAll(temp + '.js"],' + temp + '.css"]');
+        for (i = 0; i < sets.length; i++) {
+            item = sets[i];
             temp = item.getAttribute(bindProp);
             path.extname(temp) === '.js' ? urlList.push(temp) : undefined;
             path.extname(temp) === '.css' ? urlList.push(temp) : undefined;
-        });
+        }
         return urlList;
     };
 
@@ -206,8 +208,8 @@
             if (readyLen === urlList.length) {
                 for (j = 0; j < readyLen ; j ++) {
                     val = indexObj[j.toString()];
-                    if (typeof val === 'string') {
-                        path.extname(val.url) === '.js' ? execScript(val) : execStyle(val);
+                    if (typeof val.text === 'string') {
+                        path.extname(val.url) === '.js' ? execScript(val.text) : execStyle(val.text);
                     }
                 }
             }
@@ -231,7 +233,6 @@
         var urlList = getUrlList(bindProp);
         this.getUrls(urlList);
     };
-
 
     if (typeof define === 'function') {
         define(function() {
