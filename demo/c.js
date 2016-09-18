@@ -1,1 +1,2 @@
-b.c = 2;
+b = 2;
+console.log(3);

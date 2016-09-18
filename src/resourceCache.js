@@ -9,7 +9,7 @@
 
     if (lc) {
         stroage = {};
-        stroage.get = function () {
+        stroage.get = function (key) {
             try {
                 return lc.getItem(key);
             } catch (e) {
@@ -27,8 +27,6 @@
         };
     }
 
-
-
     // path
     var path = {};
     var splitPathRe = /^(\/?|)([\s\S]*?)((?:\.{1,2}|[^\/]+?|)(\.[^.\/]*|))(?:[\/]*)$/;
@@ -41,6 +39,13 @@
         return posixSplitPath(path)[3];
     };
 
+    path.basename = function (path, ext) {
+        var f = posixSplitPath(path)[2];
+        if (ext && f.substr(-1 * ext.length) === ext) {
+            f = f.substr(0, f.length - ext.length);
+        }
+        return f;
+    };
 
     // 执行css
     var execStyle = function (cssText) {
@@ -53,45 +58,25 @@
 
     // 执行js
     var execScript = function (scriptText) {
-        // try {
-            // eval.call(window, scriptText);
-        // } catch (e) {
-        //     console.error(e);
-        // }
-
-
+        var script = document.createElement('script');
+        var code = '!function(){' + scriptText + '\n}();';
+        script.appendChild(document.createTextNode(code));
+        document.head.appendChild(script);
     };
 
-    // var req = function (url, cb) {
-    //     var xhr = new XMLHttpRequest();
-    //     xhr.open('GET', url, true);
-    //     xhr.setRequestHeader('Accept', '*/*');
-    //     xhr.withCredentials = true;
-    //     if (list.indexOf(url) >= 0) {
-    //         // 在list表中
-    //         if (path.extname(url) === '.css') {
-    //             createStyle()
-    //         } else if (path.extname(url) === '.js') {
-    //             eval.call
-    //         }
-    //         eval.call(window, localStorage.getItem('ResourceCache-' + list.indexOf(url)));
-    //         xhr = null;
-    //     } else {
-    //         // 不在list表中
-    //         xhr.onload = function() {
-    //             if(xhr.status >= 200 && xhr.status < 300 || xhr.status === 304) {
-    //                 list.push(url);
-    //                 lc.setItem('ResourceCache-list', JSON.stringify(list));
-    //                 localStorage.setItem('ResourceCache-' + list.indexOf(url), xhr.responseText);
-    //                 eval.call(window, xhr.responseText);
-    //             }
-    //         };
-    //         xhr.onerror = function () {
+    var getKey = function (url) {
+        var ext = path.extname(url),
+            basename = path.basename(url, ext),
+            item = basename + ':' + url.length;
+        return item;
+    };
 
-    //         };
-    //         xhr.send();
-    //     }
-    // };
+    var setCache = function (url, text) {
+        item = getKey();
+        cacheList.push(item);
+        stroage.set('resourceCache:list', JSON.stringify(cacheList));
+        stroage.set(item, text);
+    };
 
     var req = function (url) {
         var xhr = new XMLHttpRequest();
@@ -101,56 +86,51 @@
 
         xhr.onload = function() {
             if (xhr.status >= 200 && xhr.status < 300 || xhr.status === 304) {
-                path.extname(url) === '.js' ? execScript(xhr.responseText) : execStyle(xhr.responseText);
+                // path.extname(url) === '.js'? execScript(xhr.responseText) : execStyle(xhr.responseText);
+                
+                setCache(url, xhr.responseText);
+            } else {
             }
         };
-
         xhr.onerror = function () {
-
+            fn('error');
         };
         xhr.send();
-        // var doc = document,
-        //     head = doc.head || doc.getElementsByTagName("head")[0] || doc.documentElement,
-        //     script = doc.createElement("script");
-        // script.type = "text/javascript";
-        // script.charset = "utf-8";
-        // script.onload = function () {
-        //     // dtd.resolve();
-        //     // callback && callback.call(this);
-        // };
-        // script.src = url;
-        // head.insertBefore(script, head.firstChild);
     };
 
-    var cacheExec = function (url) {
-
+    var execCache = function (url) {
+        var text;
+        text = stroage.get(getKey(url));
+        path.extname(url) === '.js'? execScript(text) : execStyle(text);
     };
 
     var bindProp = 'data-cache';
 
-
     var getUrlList = function () {
         var urlList = [], temp = '[' + bindProp + '*="';
-
         document.querySelectorAll(temp + '.js"],' + temp + '.css"]').forEach(function (item) {
             temp = item.getAttribute(bindProp);
             path.extname(temp) === '.js' ? urlList.push(temp) : undefined;
-            // path.extname(temp) === '.css' ? urlList.push(temp) : undefined;
+            path.extname(temp) === '.css' ? urlList.push(temp) : undefined;
         });
         return urlList;
     };
 
     var list = getUrlList();
 
-    list.forEach(function (item) {
-        req(item);
-    });
-    if (stroage) {
+    var cacheList = stroage.get('resourceCache:list');
 
-    } else {
-        req([]);
-    }
-    
-    // req('./test.js');
+    stroage ? cacheList = cacheList ? cacheList = JSON.parse(cacheList) : cacheList = [] : cacheList = [];
+
+    list.forEach(function (item) {
+        if (cacheList.indexOf(getKey(item)) >= 0) {
+            // match cache
+            execCache(item);
+        } else {
+            req(item);
+        }
+    });
+
+    execUrls(list);
 
 }());
