@@ -1,24 +1,24 @@
 
 
-    var lc, stroage = {};
+    var lc, storage = {};
     try {
         lc  = window.localStorage;
     } catch (e) {
         console.error(e);
     }
 
-    !lc ? stroage.get = function () {
+    !lc ? storage.get = function () {
         return 'error';
-    } : stroage.get = function (key) {
+    } : storage.get = function (key) {
         try {
             return lc.getItem(key);
         } catch (e) {
             return 'error';
         }
     };
-    !lc ? stroage.set = function () {
+    !lc ? storage.set = function () {
         return 'error';
-    } : stroage.set = function (key, value) {
+    } : storage.set = function (key, value) {
         try {
             lc.setItem(key, value);
             return 'success';
@@ -26,4 +26,16 @@
             return 'error';
         }
     };
+    !lc ? storage.remove = function () {
+        return 'error';
+    } : storage.remove = function (key) {
+        try {
+            lc.removeItem(key);
+            return 'success';
+        } catch (e) {
+            return 'error';
+        }
+    };
+
+
 

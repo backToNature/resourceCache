@@ -25,25 +25,25 @@
         return f;
     };
 
-    var lc, stroage = {};
+    var lc, storage = {};
     try {
         lc  = window.localStorage;
     } catch (e) {
         console.error(e);
     }
 
-    !lc ? stroage.get = function () {
+    !lc ? storage.get = function () {
         return 'error';
-    } : stroage.get = function (key) {
+    } : storage.get = function (key) {
         try {
             return lc.getItem(key);
         } catch (e) {
             return 'error';
         }
     };
-    !lc ? stroage.set = function () {
+    !lc ? storage.set = function () {
         return 'error';
-    } : stroage.set = function (key, value) {
+    } : storage.set = function (key, value) {
         try {
             lc.setItem(key, value);
             return 'success';
@@ -51,6 +51,18 @@
             return 'error';
         }
     };
+    !lc ? storage.remove = function () {
+        return 'error';
+    } : storage.remove = function (key) {
+        try {
+            lc.removeItem(key);
+            return 'success';
+        } catch (e) {
+            return 'error';
+        }
+    };
+
+
 
     // 执行css
     var execStyle = function (cssText) {
@@ -78,9 +90,7 @@
 
         xhr.onload = function() {
             if (xhr.status >= 200 && xhr.status < 300 || xhr.status === 304) {
-                // path.extname(url) === '.js'? execScript(xhr.responseText) : execStyle(xhr.responseText);
                 fn(xhr.responseText);
-                // setCache(url, xhr.responseText);
             } else {
                 fn('error');
             }
@@ -94,7 +104,7 @@
 
 
     var getCacheList = function () {
-        var _cacheList = stroage.get('resourceCache:list')
+        var _cacheList = storage.get('resourceCache:list')
         if (_cacheList !== 'error' && _cacheList) {
             _cacheList = JSON.parse(_cacheList);
         } else {
@@ -119,8 +129,8 @@
         var cacheList = getCacheList();
         key = getKey(url);
         cacheList.push(key);
-        stroage.set('resourceCache:list', JSON.stringify(cacheList)) === 'error' ? stroage.set('resourceCache:list', null): undefined;
-        stroage.set(key, text) === 'error'? stroage.set(key, null) : undefined;
+        storage.set('resourceCache:list', JSON.stringify(cacheList)) === 'error' ? storage.remove('resourceCache:list'): undefined;
+        storage.set(key, text) === 'error'? storage.remove(key) : undefined;
     };
 
     var getResource = function (url, fn) {
@@ -136,7 +146,7 @@
             });
         };
         if (matchCache(url)) {
-            text = stroage.get(key);
+            text = storage.get(key);
             if (text === 'error') {
                 reqRes();
             } else {
@@ -147,6 +157,15 @@
         }
     };
 
+    var clearCache = function (key) {
+        var cacheList = getCacheList(),
+            index = cacheList.indexOf(key);
+        if (index) {
+            storage.remove(key);
+            cacheList.splice(index, 1);
+            storage.set('resourceCache:list', JSON.stringify(cacheList)) === 'error' ? storage.remove('resourceCache:list'): undefined;
+        }
+    };
 
     var getUrlList = function (bindProp) {
         var urlList = [], temp = '[' + bindProp + '*="';
@@ -190,12 +209,16 @@
         });
     };
 
-    ResourceCache.clear = function () {
-
+    ResourceCache.clear = function (url) {
+        var key = getKey(url);
+        clearCache(key);
     };
 
     ResourceCache.clearAll = function () {
-
+        var cacheList = getCacheList();
+        cacheList.forEach(function (item) {
+            clearCache(item);
+        });
     };
 
     ResourceCache.getUrls = function (urlList) {
@@ -206,8 +229,8 @@
             if (readyLen === urlList.length) {
                 for (j = 0; j < readyLen ; j ++) {
                     val = indexObj[j.toString()];
-                    if (typeof val === 'string') {
-                        path.extname(val.url) === '.js' ? execScript(val) : execStyle(val);
+                    if (typeof val.text === 'string') {
+                        path.extname(val.url) === '.js' ? execScript(val.text) : execStyle(val.text);
                     }
                 }
             }

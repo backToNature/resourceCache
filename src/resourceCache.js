@@ -1,6 +1,6 @@
 !(function () {
-    var lc, stroage, cacheList;
-    // Some browser's privateMode will limit Stroage
+    var lc, storage, cacheList;
+    // Some browser's privateMode will limit storage
     try {
         lc  = window.localStorage;
     } catch (e) {
@@ -8,8 +8,8 @@
     }
 
     if (lc) {
-        stroage = {};
-        stroage.get = function (key) {
+        storage = {};
+        storage.get = function (key) {
             try {
                 return lc.getItem(key);
             } catch (e) {
@@ -17,7 +17,7 @@
             }
         };
 
-        stroage.set = function (key, value) {
+        storage.set = function (key, value) {
             try {
                 lc.setItem(key, value);
                 return 'success';
@@ -74,8 +74,8 @@
     var setCache = function (url, text) {
         item = getKey();
         cacheList.push(item);
-        stroage.set('resourceCache:list', JSON.stringify(cacheList));
-        stroage.set(item, text);
+        storage.set('resourceCache:list', JSON.stringify(cacheList));
+        storage.set(item, text);
     };
 
     var req = function (url) {
@@ -100,7 +100,7 @@
 
     var execCache = function (url) {
         var text;
-        text = stroage.get(getKey(url));
+        text = storage.get(getKey(url));
         path.extname(url) === '.js'? execScript(text) : execStyle(text);
     };
 
@@ -118,9 +118,9 @@
 
     var list = getUrlList();
 
-    var cacheList = stroage.get('resourceCache:list');
+    var cacheList = storage.get('resourceCache:list');
 
-    stroage ? cacheList = cacheList ? cacheList = JSON.parse(cacheList) : cacheList = [] : cacheList = [];
+    storage ? cacheList = cacheList ? cacheList = JSON.parse(cacheList) : cacheList = [] : cacheList = [];
 
     list.forEach(function (item) {
         if (cacheList.indexOf(getKey(item)) >= 0) {

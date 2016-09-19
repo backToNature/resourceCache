@@ -1,7 +1,7 @@
 
 
     var getCacheList = function () {
-        var _cacheList = stroage.get('resourceCache:list')
+        var _cacheList = storage.get('resourceCache:list')
         if (_cacheList !== 'error' && _cacheList) {
             _cacheList = JSON.parse(_cacheList);
         } else {
@@ -26,8 +26,8 @@
         var cacheList = getCacheList();
         key = getKey(url);
         cacheList.push(key);
-        stroage.set('resourceCache:list', JSON.stringify(cacheList)) === 'error' ? stroage.set('resourceCache:list', null): undefined;
-        stroage.set(key, text) === 'error'? stroage.set(key, null) : undefined;
+        storage.set('resourceCache:list', JSON.stringify(cacheList)) === 'error' ? storage.remove('resourceCache:list'): undefined;
+        storage.set(key, text) === 'error'? storage.remove(key) : undefined;
     };
 
     var getResource = function (url, fn) {
@@ -43,7 +43,7 @@
             });
         };
         if (matchCache(url)) {
-            text = stroage.get(key);
+            text = storage.get(key);
             if (text === 'error') {
                 reqRes();
             } else {
@@ -54,3 +54,12 @@
         }
     };
 
+    var clearCache = function (key) {
+        var cacheList = getCacheList(),
+            index = cacheList.indexOf(key);
+        if (index) {
+            storage.remove(key);
+            cacheList.splice(index, 1);
+            storage.set('resourceCache:list', JSON.stringify(cacheList)) === 'error' ? storage.remove('resourceCache:list'): undefined;
+        }
+    };

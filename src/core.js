@@ -41,12 +41,16 @@
         });
     };
 
-    ResourceCache.clear = function () {
-
+    ResourceCache.clear = function (url) {
+        var key = getKey(url);
+        clearCache(key);
     };
 
     ResourceCache.clearAll = function () {
-
+        var cacheList = getCacheList();
+        cacheList.forEach(function (item) {
+            clearCache(item);
+        });
     };
 
     ResourceCache.getUrls = function (urlList) {
@@ -57,8 +61,8 @@
             if (readyLen === urlList.length) {
                 for (j = 0; j < readyLen ; j ++) {
                     val = indexObj[j.toString()];
-                    if (typeof val === 'string') {
-                        path.extname(val.url) === '.js' ? execScript(val) : execStyle(val);
+                    if (typeof val.text === 'string') {
+                        path.extname(val.url) === '.js' ? execScript(val.text) : execStyle(val.text);
                     }
                 }
             }
