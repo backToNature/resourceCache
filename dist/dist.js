@@ -168,12 +168,14 @@
     };
 
     var getUrlList = function (bindProp) {
-        var urlList = [], temp = '[' + bindProp + '*="';
-        document.querySelectorAll(temp + '.js"],' + temp + '.css"]').forEach(function (item) {
+        var urlList = [], temp = '[' + bindProp + '*="', i, item
+            sets = document.querySelectorAll(temp + '.js"],' + temp + '.css"]');
+        for (i = 0; i < sets.length; i++) {
+            item = sets[i];
             temp = item.getAttribute(bindProp);
             path.extname(temp) === '.js' ? urlList.push(temp) : undefined;
             path.extname(temp) === '.css' ? urlList.push(temp) : undefined;
-        });
+        }
         return urlList;
     };
 
